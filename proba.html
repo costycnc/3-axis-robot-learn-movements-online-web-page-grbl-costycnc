@@ -1,0 +1,71 @@
+<html>
+<body>
+  <button id="connectButton">Connect</button>
+  <button onclick="vairesult()">TEST</button>
+  X=<input type="range" min="0" max="100" step="1" value="0" onclick='vaix(this.value);'>
+  Y=<input type="range" min="0" max="100" step="1" value="0" onclick='vaiy(this.value);'>
+  Z=<input type="range" min="0" max="20" step=".1" value="0" onclick='vaiz(this.value);'><br>
+   <input type="text" id="lname" value="here need grbl">
+   <textarea cols="100" id="gcode" rows="60" ></textarea>
+  
+  <script>
+    const connectButton = document.getElementById('connectButton');
+	var writer,tct="a";
+	
+	let myVar = setInterval(myT ,1000);
+      function myT() {
+     //console.log(tct);
+     }
+
+    connectButton.addEventListener('click', async () => {
+      try {
+        // Request user to select a serial port
+        const port = await navigator.serial.requestPort();
+		await port.open({ baudRate: 115200 });
+
+        // Set up stream for reading data
+        const textDecoder = new TextDecoderStream();
+        const readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+        reader = textDecoder.readable.getReader();
+		
+		const textEncoder = new TextEncoderStream();
+        const writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
+        writer = textEncoder.writable.getWriter();
+
+        // Continuously read and log data from serial port
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) {
+            reader.releaseLock();
+            break;
+          }
+		  if (value=="ok") value="ok\n";
+
+          document.getElementById('gcode').value+=value;
+		  tct=value;
+		  console.log(tct);		
+        }
+      } catch (error) {
+        console.error('Error connecting to serial port:', error);
+        // Handle the error appropriately (e.g., display an error message to the user)
+      }
+	  
+	  
+    });
+	
+	    async function vairesult() {
+        await writer.write("?\r");
+
+      }	  
+	    async function vaix(value5) {
+        await writer.write("G90 F300\rG01 X"+value5+"\r");		
+      }	  
+	    async function vaiy(value5) {
+        await writer.write("G90 F500\rG01 Y"+value5+"\r");		
+      }	  
+	    async function vaiz(value5) {
+        await writer.write("G90 F100\rG01 Z"+value5+"\r");	
+      }
+  </script>
+</body>
+</html>

@@ -5,12 +5,12 @@
   X=<input type="range" min="0" max="500" step="1" value="0" onclick='vaix(this.value);'>
   Y=<input type="range" min="0" max="100" step="1" value="0" onclick='vaiy(this.value);'>
   Z=<input type="range" min="0" max="20" step=".1" value="0" onclick='vaiz(this.value);'><br>
-   <input type="text" id="lname" value="here need grbl">
+     <input type="text" id="lname" value="here need grbl">
    <textarea cols="100" id="gcode" rows="60" ></textarea>
   
   <script>
     const connectButton = document.getElementById('connectButton');
-	var writer,tct="a";
+	var writer,tct="a",valuex="",gcode="";;
 	
 	let myVar = setInterval(myT ,1000);
       function myT() {
@@ -31,6 +31,7 @@
 		const textEncoder = new TextEncoderStream();
         const writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
         writer = textEncoder.writable.getWriter();
+				
 
         // Continuously read and log data from serial port
         while (true) {
@@ -39,11 +40,30 @@
             reader.releaseLock();
             break;
           }
-		  if (value=="ok") value="ok\n";
+		  valuex +=value;
+  if (valuex.includes('\r') || valuex.includes('\n')) {
+     if (valuex.includes('|')) {
+	 const parts = valuex.split("|");
+	 const coords1 = parts[1].split(":");
+	 const coords = coords1[1].split(",");
+	 console.log(coords[0]);
+	 console.log(coords[1]);
+	 console.log(coords[2]);
+	 gcode="G01 X"+coords[0]+" Y"+coords[1]+" Z"+coords[2]+"\n";
+     document.getElementById('lname').value =gcode;	 
+	 valuex="";
+	 }
+	
+  if (valuex.includes('ok')) {
 
-          document.getElementById('gcode').value+=value;
-		  tct=value;
-		  console.log(tct);		
+	 console.log(valuex);
+	 valuex="";
+	 }
+	
+	
+
+  }
+	     
         }
       } catch (error) {
         console.error('Error connecting to serial port:', error);
@@ -55,7 +75,7 @@
 	
 	    async function vairesult() {
         await writer.write("?\r");
-
+        document.getElementById('gcode').value +=gcode;
       }	  
 	    async function vaix(value5) {
         await writer.write("G90 F1000\rG01 X"+value5+"\r");		
@@ -66,6 +86,7 @@
 	    async function vaiz(value5) {
         await writer.write("G90 F100\rG01 Z"+value5+"\r");	
       }
+	  
   </script>
 </body>
 </html>
